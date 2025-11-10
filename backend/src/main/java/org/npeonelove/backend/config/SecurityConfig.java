@@ -1,6 +1,7 @@
 package org.npeonelove.backend.config;
 
 import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.security.jwt.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -9,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @RequiredArgsConstructor
 @Configuration
@@ -16,7 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-//    private final JwtFilter jwtFilter;
+    private final JwtFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -32,16 +34,14 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/swagger-resources",
                                 "/webjars/**",
-                                "/api/v1/auth/sign-up",
-                                "/api/v1/auth/sign-in",
-                                "/api/v1/auth/refresh-access-token"
+                                "/api/v1/auth/exchange"
                         ).permitAll()
                         .requestMatchers("/api/v1/auth/change-password",
                                 "/api/v1/auth/sign-out").authenticated()
                         .anyRequest().permitAll())
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-//                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

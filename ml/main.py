@@ -11,7 +11,7 @@ app = FastAPI(
 )
 
 DEEPSEEK_API_KEY = "sk-97963a0807fa47ac9323277c434a45e6"
-DEEPSEEK_API_URL = "https://api.deepseek.com"
+DEEPSEEK_API_URL = "hhttps://api.deepseek.com/chat/completions"
 
 # Модели данных
 class PromptRequest(BaseModel):

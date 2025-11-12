@@ -1,0 +1,18 @@
+package org.npeonelove.backend.dto.scenario;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.npeonelove.backend.dto.type.GetTypeResponseDTO;
+import org.npeonelove.backend.model.scenario.Type;
+
+import java.util.UUID;
+
+@Getter
+@Setter
+public class ScenarioListResponseDTO {
+
+    private UUID scenarioId;
+    private String title;
+    private GetTypeResponseDTO scenarioType;
+
+}

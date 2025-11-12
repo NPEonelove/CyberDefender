@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  fastapi-app:
+    build: .
+    container_name: resume-analyst-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ai/json_dumps:/app/ai/json_dumps
+      - ./logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -34,6 +34,10 @@ public class Achievement {
     @Column(name = "required_exp")
     private Integer requiredExp;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private Type type;
+
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;

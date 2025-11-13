@@ -9,3 +9,7 @@ databaseChangeLog:
       file: db/changelog/versions/scenario/03-add_column_scenarios.sql
   - include:
       file: db/changelog/versions/achievement/01-create_achievements_table.sql
+  - include:
+      file: db/changelog/versions/achievement/02-add_test_data.sql
+  - include:
+      file: db/changelog/versions/achievement/03-add_achievement_type.sql

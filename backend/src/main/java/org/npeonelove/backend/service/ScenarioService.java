@@ -26,6 +26,7 @@ import java.util.UUID;
 public class ScenarioService {
 
     private final ScenarioRepository scenarioRepository;
+    private final AchievementService achievementService;
     private final UserService userService;
     private final MlFeignClient mlFeignClient;
     private final ModelMapper modelMapper;
@@ -129,6 +130,8 @@ public class ScenarioService {
         } else {
             getUserResponseDTO = userService.addExperience(userId, false);
         }
+
+        achievementService.checkAndAwardExperienceAchievements(userId);
 
         return getUserResponseDTO;
     }

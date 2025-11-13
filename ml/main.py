@@ -1,23 +1,28 @@
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
-import requests
 from typing import Optional
+import logging
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="DeepSeek API",
-    description="API для взаимодействия с DeepSeek",
+    title="Qwen API",
+    description="API для взаимодействия с моделью Qwen",
     version="1.0.0"
 )
-
-DEEPSEEK_API_KEY = "sk-97963a0807fa47ac9323277c434a45e6"
-DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
 # Модели данных
 class PromptRequest(BaseModel):
     prompt: str
+    max_tokens: Optional[int] = 512
+    temperature: Optional[float] = 0.7
 
 class PromptResponse(BaseModel):
+    status: str
+    prompt: str
     response: str
 
 class ErrorResponse(BaseModel):
@@ -26,93 +31,97 @@ class ErrorResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
 
-@app.post(
-    "/api",
-    response_model=PromptResponse,
-    responses={
-        400: {"model": ErrorResponse},
-        500: {"model": ErrorResponse}
-    },
-    summary="Отправить промт в DeepSeek",
-    description="Принимает промт и возвращает ответ от DeepSeek API"
-)
-async def handle_prompt(request: PromptRequest):
-    try:
-        deepseek_response = await send_to_deepseek(
-            request.prompt
-        )
+# Глобальные переменные
+tokenizer = None
+model = None
+model_loaded = False
 
-        return PromptResponse(
-            response=deepseek_response
+@app.on_event("startup")
+async def load_model():
+    global tokenizer, model, model_loaded
+    
+    try:
+        logger.info("Попытка загрузки модели Qwen...")
+        # Загружаем модель
+        tokenizer = AutoTokenizer.from_pretrained(
+            "Qwen/Qwen2.5-0.5B-Instruct",
+            trust_remote_code=True
         )
         
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+        model = AutoModelForCausalLM.from_pretrained(
+            "Qwen/Qwen2.5-0.5B-Instruct",
+            device_map="auto",
+            trust_remote_code=True
         )
+        
+        model_loaded = True
+        logger.info("Модель успешно загружена!")
+        
+    except Exception as e:
+        logger.error(f"Ошибка при загрузке модели: {e}")
+        model_loaded = False
+
+@app.post("/api")
+async def handle_prompt(request: PromptRequest):
+    try:
+        if not model_loaded:
+            return PromptResponse(
+                status="success",
+                prompt=request.prompt,
+                response=f"Заглушка: Вы сказали '{request.prompt}'. Модель не загружена."
+            )
+        
+        qwen_response = await generate_response(
+            request.prompt, 
+            request.max_tokens
+        )
+        
+        return PromptResponse(
+            response=qwen_response
+        )
+        
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Произошла ошибка: {str(e)}"
         )
 
-async def send_to_deepseek(prompt: str, max_tokens: int = 1000, temperature: float = 0.7):
-    """
-    Функция для отправки запроса в DeepSeek API
-    """
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {DEEPSEEK_API_KEY}'
-    }
-    
-    payload = {
-        'model': 'deepseek-chat',
-        'messages': [
-            {
-                'role': 'user',
-                'content': prompt
-            }
-        ],
-        'max_tokens': 1000,
-        'temperature': 0.7
-    }
-    
+async def generate_response(prompt: str):
     try:
-        response = requests.post(
-            DEEPSEEK_API_URL,
-            headers=headers,
-            json=payload,
-            timeout=30
+        messages = [
+            {"role": "user", "content": prompt}
+        ]
+        
+        inputs = tokenizer.apply_chat_template(
+            messages,
+            add_generation_prompt=True,
+            tokenize=True,
+            return_dict=True,
+            return_tensors="pt",
         )
         
-        response.raise_for_status()
-        response_data = response.json()
-        return response_data['choices'][0]['message']['content']
+        # Генерируем ответ
+        outputs = model.generate(
+            **inputs,
+            pad_token_id=tokenizer.eos_token_id,
+        )
         
-    except requests.exceptions.RequestException as e:
-        raise Exception(f"Ошибка при обращении к DeepSeek API: {str(e)}")
-    except (KeyError, IndexError) as e:
-        raise Exception(f"Ошибка при обработке ответа от DeepSeek: {str(e)}")
+        # Декодируем ответ
+        response = tokenizer.decode(
+            outputs[0][inputs["input_ids"].shape[-1]:], 
+            skip_special_tokens=True
+        )
+        
+        return response.strip()
+        
+    except Exception as e:
+        return f"Ошибка генерации: {str(e)}"
 
-@app.get(
-    "/health",
-    response_model=HealthResponse,
-    summary="Проверка здоровья API",
-    description="Эндпоинт для проверки работоспособности API"
-)
+@app.get("/health")
 async def health_check():
-    return HealthResponse(status="API работает корректно")
-
-@app.get("/", include_in_schema=False)
-async def root():
-    return {"message": "DeepSeek API Proxy работает!"}
+    status_msg = "Модель загружена" if model_loaded else "Модель не загружена (режим заглушки)"
+    return HealthResponse(status=f"API работает. {status_msg}")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="localhost",
-        port=8000,
-        reload=True
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8000)

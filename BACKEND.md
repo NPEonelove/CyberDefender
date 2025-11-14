@@ -55,99 +55,320 @@ mvn clean package
 java -jar target/*.jar
 ```
 
-## 🌐 Доступ к приложению извне через Cloudflare Tunnel
-
-### Регистрация в Cloudflare
-
-1. Перейдите на [cloudflare.com](https://cloudflare.com) и создайте аккаунт
-2. Добавьте ваш домен в Cloudflare
-3. В панели управления Cloudflare перейдите в **Zero Trust** → **Networks** → **Tunnels**
+## 🌐 Настройка HTTPS через Cloudflare Tunnel
 
 ### Установка cloudflared
 
-**Mac:**
+**Windows (через Chocolatey):**
+```powershell
+# Запустите PowerShell от имени администратора и установите cloudflared
+choco install cloudflared
+```
+
+**Linux (Ubuntu/Debian):**
 ```bash
+# Скачайте и установите cloudflared
+wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
+```
+
+**MacOS:**
+```bash
+# Установите через Homebrew
 brew install cloudflared
 ```
 
-**Linux:**
+## 🔧 Пошаговая инструкция настройки HTTPS
+
+### Шаг 1: Запустите бэкенд в Docker
+
 ```bash
-# Ubuntu/Debian
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
-chmod +x cloudflared
-sudo mv cloudflared /usr/local/bin/
+# Перейдите в папку с проектом
+cd cyberedu-backend
 
-# CentOS/RHEL
-sudo yum install cloudflared
+# Соберите и запустите контейнеры
+docker-compose build
+docker-compose up -d
+
+# Проверьте, что все запущено
+docker-compose ps
+
+# Проверьте логи бэкенда (должны увидеть успешный запуск Spring Boot)
+docker-compose logs cyberedu-backend
 ```
 
-**Windows:**
-- Скачайте exe файл с [официального репозитория](https://github.com/cloudflare/cloudflared/releases)
-- Добавьте в PATH или запускайте из папки
-
-### Настройка туннеля
-
-1. **Аутентификация:**
+**Убедитесь, что бэкенд доступен локально:**
 ```bash
-cloudflared tunnel login
+curl http://localhost:8080/api/v1/auth/test
 ```
+**Должен вернуться ответ:** `"test"`
 
-2. **Создание туннеля:**
+### Шаг 2: Запустите Cloudflare Tunnel
+
 ```bash
-cloudflared tunnel create cyberedu-tunnel
+# Запустите туннель для бэкенда
+cloudflared tunnel --url http://localhost:8080
 ```
 
-3. **Настройка конфигурации:**
-Создайте файл `config.yml` в `~/.cloudflared/` (Linux/Mac) или `%USERPROFILE%\.cloudflared\` (Windows):
-```yaml
-tunnel: <your-tunnel-id>
-credentials-file: /root/.cloudflared/<your-tunnel-id>.json
-
-ingress:
-  - hostname: your-subdomain.your-domain.com
-    service: http://localhost:8080
-  - service: http_status:404
+**После запуска вы увидите примерно такой вывод:**
+```
+2024-01-15T12:00:00Z INF |  https://invitation-plot-jesus-buffalo.trycloudflare.com
+2024-01-15T12:00:00Z INF |  +-----------------------------------------------------------+
+2024-01-15T12:00:00Z INF |  |  Your free tunnel is now running!                        |
+2024-01-15T12:00:00Z INF |  +-----------------------------------------------------------+
 ```
 
-4. **Запуск туннеля:**
+**Сохраните полученный URL!** Например: `https://invitation-plot-jesus-buffalo.trycloudflare.com`
+
+### Шаг 3: Настройка фронтенда
+
+**Найдите и отредактируйте конфигурационный файл API во фронтенд проекте:**
+
+**Обычно это один из этих файлов:**
+- `src/config/api.js`
+- `src/config/constants.js`
+- `src/services/api.js`
+- `.env` или `.env.development`
+- `src/environments/environment.ts` (для Angular)
+
+**Пример для React/Vue:**
+```javascript
+// src/config/api.js
+export const API_BASE_URL = 'https://invitation-plot-jesus-buffalo.trycloudflare.com/api/v1';
+```
+
+**Или в .env файле:**
+```env
+REACT_APP_API_URL=https://invitation-plot-jesus-buffalo.trycloudflare.com/api/v1
+VUE_APP_API_URL=https://invitation-plot-jesus-buffalo.trycloudflare.com/api/v1
+```
+
+### Шаг 4: Проверка работы
+
+1. **Проверьте бэкенд через туннель:**
 ```bash
-cloudflared tunnel run cyberedu-tunnel
+curl https://invitation-plot-jesus-buffalo.trycloudflare.com/api/v1/auth/test
 ```
+**Должен вернуться ответ:** `"test"`
 
-5. **Настройка DNS записи** в панели Cloudflare, указывающей на ваш туннель
+2. **Проверьте Swagger документацию:**
+Откройте в браузере: `https://invitation-plot-jesus-buffalo.trycloudflare.com/swagger-ui.html`
 
-### Запуск туннеля как службы (опционально)
-
-**Linux:**
+3. **Протестируйте регистрацию пользователя:**
 ```bash
-sudo cloudflared service install
-sudo systemctl start cloudflared
+curl -X POST https://invitation-plot-jesus-buffalo.trycloudflare.com/api/v1/auth/sign-up \
+  -H "Content-Type: application/json" \
+  -d '{"userId": 12345, "username": "testuser", "age": 25}'
 ```
 
-**Windows:**
+## 📋 Все API Endpoints CyberEDU Backend
+
+## 🔐 Аутентификация (`/api/v1/auth`)
+
+### `POST /api/v1/auth/sign-up`
+**Регистрация нового пользователя**
+```json
+{
+  "userId": 12345,
+  "username": "ivan",
+  "age": 25
+}
+```
+**Ответ:** JWT токены (access + refresh)
+
+### `POST /api/v1/auth/sign-in`
+**Вход существующего пользователя**
+```json
+{
+  "userId": 12345
+}
+```
+**Ответ:** JWT токены
+
+### `POST /api/v1/auth/refresh-access-token`
+**Обновление access токена**
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+**Ответ:** Новые JWT токены
+
+### `GET /api/v1/auth/test`
+**Тестовый endpoint**
+**Ответ:** "test"
+
+## 👤 Пользователи (`/api/v1/users`)
+
+### `GET /api/v1/users/{userId}`
+**Получение профиля пользователя**
+```json
+{
+  "userId": 12345,
+  "userName": "ivan",
+  "age": 25,
+  "mode": "ADULT",
+  "experience": 50,
+  "role": "USER",
+  "createdAt": "2024-01-15T10:30:00"
+}
+```
+
+### `PATCH /api/v1/users/{userId}`
+**Обновление данных пользователя**
+```json
+{
+  "username": "new_username",
+  "age": 26,
+  "mode": "CHILD"
+}
+```
+
+## 📚 Сценарии (`/api/v1/scenarios`)
+
+### `GET /api/v1/scenarios`
+**Получение всех сценариев**
+```json
+[
+  {
+    "scenarioId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "title": "Фишинговая атака",
+    "scenarioType": {
+      "typeId": "b2c3d4e5-f6g7-8901-bcde-f23456789012",
+      "title": "Фишинг"
+    }
+  }
+]
+```
+
+### `GET /api/v1/scenarios/type/{typeId}`
+**Получение сценариев по типу**
+
+### `GET /api/v1/scenarios/{scenarioId}`
+**Получение конкретного сценария**
+```json
+{
+  "scenarioId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "title": "Фишинговая атака",
+  "text": "Полное описание сценария...",
+  "scam": true,
+  "scenarioType": {
+    "typeId": "b2c3d4e5-f6g7-8901-bcde-f23456789012",
+    "title": "Фишинг"
+  }
+}
+```
+
+### `POST /api/v1/scenarios/{scenarioId}/explain`
+**Получение объяснения сценария (без пользовательского ввода)**
+**Ответ:** 
+```json
+{
+  "response": "Объяснение от ML модели..."
+}
+```
+
+### `POST /api/v1/scenarios/{scenarioId}/feedback`
+**Получение фидбека по ответу пользователя**
+```json
+{
+  "prompt": "Ответ пользователя на сценарий"
+}
+```
+**Ответ:**
+```json
+{
+  "response": "Анализ ответа от ML модели..."
+}
+```
+
+### `POST /api/v1/scenarios/generate/{typeId}`
+**Генерация нового сценария**
+**Ответ:** Сгенерированный сценарий в формате ScenarioPageResponseDTO
+
+### `GET /api/v1/scenarios/health`
+**Проверка доступности ML сервиса**
+```json
+{
+  "status": "healthy"
+}
+```
+
+### `POST /api/v1/scenarios/{scenarioId}/finish/{userId}`
+**Завершение сценария и получение опыта**
+**Параметры:**
+- `answer` (boolean) - ответ пользователя
+- `userId` (path) - ID пользователя
+- `scenarioId` (path) - ID сценария
+
+**Ответ:** Обновленный профиль пользователя с новым опытом
+
+## 🏆 Достижения (`/api/v1/achievements`)
+
+### `GET /api/v1/achievements/{userId}`
+**Получение всех достижений пользователя**
+```json
+[
+  {
+    "achievementId": "c3d4e5f6-g7h8-9012-cdef-345678901234",
+    "name": "Новичок",
+    "description": "Получите 10 опыта",
+    "icon": "🎯",
+    "requiredExp": 10,
+    "type": "EXPERIENCE",
+    "earnedAt": "2024-01-15T11:30:00"
+  }
+]
+```
+
+### `GET /api/v1/achievements/{userId}/give-experience-achievements`
+**Принудительная проверка и выдача достижений за опыт**
+**Ответ:** `true` - если достижения были выданы
+
+## 🛡 Уровни доступа
+
+### PUBLIC Endpoints (не требуют аутентификации):
+```
+/api/v1/auth/sign-up
+/api/v1/auth/sign-in
+/api/v1/auth/refresh-access-token
+/api/v1/auth/test
+/v3/api-docs/**
+/swagger-ui/**
+/swagger-ui.html
+/swagger-resources/**
+```
+
+### AUTHENTICATED Endpoints (требуют JWT токен):
+Все остальные endpoints
+
+## 📝 Примеры использования
+
+### Полная последовательность работы:
+
+1. **Регистрация пользователя:**
 ```bash
-# Запуск от администратора
-cloudflared service install
+curl -X POST https://your-tunnel-url.trycloudflare.com/api/v1/auth/sign-up \
+  -H "Content-Type: application/json" \
+  -d '{"userId": 12345, "username": "ivan", "age": 25}'
 ```
 
-## 📊 API Endpoints
+2. **Получение списка сценариев:**
+```bash
+curl -X GET https://your-tunnel-url.trycloudflare.com/api/v1/scenarios \
+  -H "Authorization: Bearer {access-token}"
+```
 
-### Аутентификация
-- `POST /api/v1/auth/sign-up` - регистрация
-- `POST /api/v1/auth/sign-in` - вход
-- `POST /api/v1/auth/refresh-access-token` - обновление токена
+3. **Прохождение сценария:**
+```bash
+# Получить объяснение
+curl -X POST https://your-tunnel-url.trycloudflare.com/api/v1/scenarios/{scenarioId}/explain \
+  -H "Authorization: Bearer {access-token}"
 
-### Пользователи
-- `GET /api/v1/users/{userId}` - получение профиля
-- `PATCH /api/v1/users/{userId}` - обновление профиля
-
-### Сценарии
-- `GET /api/v1/scenarios` - все сценарии
-- `GET /api/v1/scenarios/{scenarioId}` - конкретный сценарий
-- `POST /api/v1/scenarios/feedback` - отправка ответа на сценарий
-
-### Достижения
-- `GET /api/v1/achievements/{userId}` - достижения пользователя
+# Завершить сценарий
+curl -X POST "https://your-tunnel-url.trycloudflare.com/api/v1/scenarios/{scenarioId}/finish/12345?answer=true" \
+  -H "Authorization: Bearer {access-token}"
+```
 
 ## 🔧 Конфигурация
 
@@ -159,31 +380,18 @@ cloudflared service install
 - `SPRING_DATASOURCE_USERNAME` - пользователь БД
 - `SPRING_DATASOURCE_PASSWORD` - пароль БД
 
-### База данных
-
-Приложение использует PostgreSQL с автоматическим созданием таблиц через Hibernate DDL.
-
 ## 📚 Документация API
 
 После запуска приложения документация доступна по адресам:
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI спецификация: `http://localhost:8080/v3/api-docs`
+- Swagger UI: `https://your-tunnel-url.trycloudflare.com/swagger-ui/index.html#/`
+- OpenAPI спецификация: `https://your-tunnel-url.trycloudflare.com/v3/api-docs`
 
-## 🗄 Структура базы данных
+## 🚨 Важные замечания
 
-Основные сущности:
-- `users` - пользователи системы
-- `scenarios` - образовательные сценарии
-- `achievements` - достижения
-- `user_achievements` - связь пользователей с достижениями
-- `types` - типы сценариев
-
-## 🔒 Безопасность
-
-- JWT-based аутентификация
-- Spring Security конфигурация
-- BCrypt кодирование
-- CORS настройки
+1. **Cloudflare Tunnel должен быть запущен постоянно**, пока вам нужен доступ к бэкенду извне
+2. **При перезапуске tunnel URL изменится** - нужно будет обновить его во фронтенде
+3. **Для продакшена** рекомендуется настроить постоянный домен через Cloudflare Dashboard
+4. **Порт 8080** должен быть свободен и бэкенд должен быть запущен перед запуском tunnel
 
 ## 🐛 Логирование и отладка
 
@@ -192,41 +400,6 @@ cloudflared service install
 docker-compose logs cyberedu-backend
 ```
 
-## 📦 Docker образы
+Логи Cloudflare Tunnel отображаются в консоли где запущен `cloudflared`
 
-- `cyberedu-backend` - основное приложение (порт 8080)
-- `cyberedu_db` - PostgreSQL база данных (порт 5456)
-
-## 🤝 Разработка
-
-### Структура проекта
-```
-src/
-├── main/
-│   ├── java/
-│   │   └── org/npeonelove/backend/
-│   │       ├── config/          # Конфигурационные классы
-│   │       ├── controller/      # REST контроллеры
-│   │       ├── service/         # Бизнес-логика
-│   │       ├── repository/      # Data access layer
-│   │       ├── model/           # Сущности БД
-│   │       ├── dto/             # Data transfer objects
-│   │       └── security/        # Security конфигурация
-│   └── resources/
-│       └── application.properties
-└── test/
-```
-
-### Сборка для продакшена
-```bash
-mvn clean package -DskipTests
-docker build -t cyberedu-backend .
-```
-
-## 📄 Лицензия
-
-[Указать лицензию]
-
-## 👥 Команда
-
-[Информация о разработчиках]
+Теперь ваш бэкенд доступен по HTTPS с бесплатным доменом от Cloudflare!

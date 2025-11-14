@@ -1,0 +1,62 @@
+.btn {
+  background: #696969;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.5s background ease;
+  z-index: 1001;
+}
+
+.btn:hover {
+  background: #505050;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1004;
+}
+
+.historyHeader {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.historyHeaderBtn {
+  background: #696969;
+  color: white;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.5s background ease;
+}
+
+.historyHeaderBtn:hover {
+  background: #505050;
+}
+
+.historyList {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100vh;
+  background: #ffffff;
+  padding: 20px;
+  overflow-y: auto;
+  z-index: 1005;
+  border-right: 1px solid #e0e0e0;
+}

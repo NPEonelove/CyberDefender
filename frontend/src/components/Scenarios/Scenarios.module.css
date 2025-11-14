@@ -1,0 +1,94 @@
+.container {
+  padding: 20px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+
+.title {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.scenariosList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scenarioItem {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.scenarioItem:hover {
+  background: #f8f9fa;
+  border-color: #696969;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scenarioTitle {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.scenarioType {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.error {
+  text-align: center;
+  padding: 40px;
+  color: #d32f2f;
+  font-size: 16px;
+}
+
+.retryButton {
+  display: block;
+  margin: 16px auto 0;
+  background: #696969;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+.retryButton:hover {
+  background: #505050;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 16px;
+}
+
+.authRequired {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+  font-style: italic;
+}

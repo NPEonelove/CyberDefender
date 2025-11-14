@@ -1,0 +1,22 @@
+.historyItem {
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.historyItem:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.historyItem:last-child {
+  border-bottom: none;
+}
+
+.chat {
+  text-align: left;
+  font-size: 18px;
+}

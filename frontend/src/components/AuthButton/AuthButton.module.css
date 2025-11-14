@@ -1,0 +1,137 @@
+.signInButton {
+  background: #696969;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  border: none;
+  padding: 10px 16px;
+  transition: 0.5s background ease;
+}
+
+.signInButton:hover {
+  background: #505050;
+}
+
+.avatarBtn {
+  width: 40px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.userSkeleton {
+  background: #696969;
+  border-radius: 50%;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1004;
+}
+
+.userModal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  background: #ffffff;
+  padding: 20px;
+  overflow-y: auto;
+  z-index: 1005;
+  width: 250px;
+  border-radius: 20px;
+}
+
+.userData {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarModal {
+  width: 60px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.username {
+  font-size: 32px;
+}
+
+.logOutButton {
+  background: #696969;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  border: none;
+  padding: 6px;
+  transition: 0.5s background ease;
+}
+
+.logOutButton:hover {
+  background: #505050;
+}
+
+.loader {
+  width: 35px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 3px dashed black;
+  /* border-top: 3px solid black; */
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  99% {
+    transform: rotate(360deg);
+  }
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+}
+
+.signOutButton {
+  background: #696969;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  border: none;
+  padding: 6px 12px;
+  transition: 0.5s background ease;
+  font-size: 12px;
+}
+
+.signOutButton:hover {
+  background: #505050;
+}
+
+.signInButton:disabled {
+  background: #a0a0a0;
+  cursor: not-allowed;
+}
+
+.achievementInfo {
+  font-size: 12px;
+  color: #90EE90;
+  font-weight: bold;
+}

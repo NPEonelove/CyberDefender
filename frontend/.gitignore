@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+
+# Environment variables
+.env.example
+.env.local
+
+# OS generated files
+.DS_Store
+
+# TypeScript
+next-env.d.ts

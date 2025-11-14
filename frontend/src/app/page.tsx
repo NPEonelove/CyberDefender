@@ -32,32 +32,57 @@ export default function Home() {
 
   useEffect(() => {
     const initWebApp = async () => {
-      if (typeof window !== 'undefined' && window.MaxWebApp) {
-        if (window.MaxWebApp.ready) {
-          window.MaxWebApp.ready();
-        }
+      if (typeof window !== 'undefined') {
+        const maxRetries = 10;
+        let attempts = 0;
         
-        if (window.MaxWebApp.expand) {
-          window.MaxWebApp.expand();
-        }
-        
-        setIsWebAppInitialized(true);
-        
-        const userData = window.MaxWebApp.initDataUnsafe?.user;
-        if (userData && userData.id) {
-          try {
-            await authService.signIn(userData.id);
-            setIsAuthenticated(true);
-          } catch (error) {
-            console.error('Auto sign-in failed:', error);
+        const tryInit = async () => {
+          attempts++;
+          
+          if (window.MaxWebApp) {
+            try {
+              if (window.MaxWebApp.ready) {
+                window.MaxWebApp.ready();
+              }
+              
+              if (window.MaxWebApp.expand) {
+                window.MaxWebApp.expand();
+              }
+              
+              setIsWebAppInitialized(true);
+              
+              const userData = window.MaxWebApp.initDataUnsafe?.user;
+              if (userData && userData.id) {
+                await authService.signIn(userData.id);
+                setIsAuthenticated(true);
+              }
+              
+              return true;
+            } catch (error) {
+              console.error('Web app init error:', error);
+            }
           }
-        }
+          
+          if (attempts < maxRetries) {
+            setTimeout(tryInit, 500);
+          }
+          
+          return false;
+        };
+        
+        tryInit();
       }
     };
 
     setIsAuthenticated(authService.isAuthenticated());
-
-    const timer = setTimeout(initWebApp, 1000);
+    
+    if (typeof window !== 'undefined') {
+      if (document.readyState === 'complete') {
+        initWebApp();
+      } else {
+        window.addEventListener('load', initWebApp);
+      }
+    }
 
     const checkAuth = () => {
       setIsAuthenticated(authService.isAuthenticated());
@@ -66,8 +91,10 @@ export default function Home() {
     const interval = setInterval(checkAuth, 1000);
     
     return () => {
-      clearTimeout(timer);
       clearInterval(interval);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('load', initWebApp);
+      }
     };
   }, []);
 

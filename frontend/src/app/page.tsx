@@ -23,6 +23,20 @@ declare global {
       ready?: () => void;
       expand?: () => void;
     };
+    WebApp?: {
+      initData?: string;
+      initDataUnsafe?: {
+        user?: {
+          id: number;
+          first_name?: string;
+          last_name?: string;
+          username?: string;
+        };
+      };
+      ready?: () => void;
+      expand?: () => void;
+    };
+    TelegramWebApp?: any;
   }
 }
 
@@ -39,22 +53,39 @@ export default function Home() {
         const tryInit = async () => {
           attempts++;
           
-          if (window.MaxWebApp) {
+          console.log(`Attempt ${attempts}: Checking for web app objects...`);
+          console.log('MaxWebApp:', window.MaxWebApp);
+          console.log('WebApp:', window.WebApp);
+          console.log('TelegramWebApp:', window.TelegramWebApp);
+          console.log('All window properties:', Object.keys(window).filter(key => key.toLowerCase().includes('app')));
+          
+          const webApp = window.MaxWebApp || window.WebApp || window.TelegramWebApp;
+          
+          if (webApp) {
             try {
-              if (window.MaxWebApp.ready) {
-                window.MaxWebApp.ready();
+              console.log('Found web app object:', webApp);
+              
+              if (webApp.ready) {
+                webApp.ready();
+                console.log('WebApp ready called');
               }
               
-              if (window.MaxWebApp.expand) {
-                window.MaxWebApp.expand();
+              if (webApp.expand) {
+                webApp.expand();
+                console.log('WebApp expand called');
               }
               
               setIsWebAppInitialized(true);
               
-              const userData = window.MaxWebApp.initDataUnsafe?.user;
+              const userData = webApp.initDataUnsafe?.user;
+              console.log('User data from web app:', userData);
+              
               if (userData && userData.id) {
+                console.log('Auto-signing in with user ID:', userData.id);
                 await authService.signIn(userData.id);
                 setIsAuthenticated(true);
+              } else {
+                console.log('No user data available');
               }
               
               return true;
@@ -65,6 +96,8 @@ export default function Home() {
           
           if (attempts < maxRetries) {
             setTimeout(tryInit, 500);
+          } else {
+            console.log('Max attempts reached, web app not found');
           }
           
           return false;

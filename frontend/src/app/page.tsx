@@ -10,7 +10,7 @@ import c from "./page.module.css";
 
 declare global {
   interface Window {
-    MaxWebApp?: {
+    WebApp?: {
       initData?: string;
       initDataUnsafe?: {
         user?: {
@@ -19,11 +19,11 @@ declare global {
           last_name?: string;
           username?: string;
         };
+        start_param?: string;
       };
       ready?: () => void;
       expand?: () => void;
     };
-    TelegramWebApp?: any;
   }
 }
 
@@ -36,37 +36,35 @@ export default function Home() {
       if (typeof window !== 'undefined') {
         const maxRetries = 10;
         let attempts = 0;
-        
+
         const tryInit = async () => {
           attempts++;
-          
-          console.log(`Attempt ${attempts}: Checking for web app objects...`);
-          console.log('MaxWebApp:', window.MaxWebApp);
-          console.log('WebApp:', (window as any).WebApp);
-          console.log('TelegramWebApp:', window.TelegramWebApp);
+
+          console.log(`Attempt ${attempts}: Checking for Max WebApp...`);
+          console.log('WebApp:', window.WebApp);
           console.log('All window properties:', Object.keys(window).filter(key => key.toLowerCase().includes('app')));
-          
-          const webApp = window.MaxWebApp || (window as any).WebApp || window.TelegramWebApp;
-          
+
+          const webApp = window.WebApp;
+
           if (webApp) {
             try {
               console.log('Found web app object:', webApp);
-              
+
               if (webApp.ready) {
                 webApp.ready();
                 console.log('WebApp ready called');
               }
-              
+
               if (webApp.expand) {
                 webApp.expand();
                 console.log('WebApp expand called');
               }
-              
+
               setIsWebAppInitialized(true);
-              
+
               const userData = webApp.initDataUnsafe?.user;
               console.log('User data from web app:', userData);
-              
+
               if (userData && userData.id) {
                 console.log('Auto-signing in with user ID:', userData.id);
                 await authService.signIn(userData.id);
@@ -74,28 +72,28 @@ export default function Home() {
               } else {
                 console.log('No user data available');
               }
-              
+
               return true;
             } catch (error) {
               console.error('Web app init error:', error);
             }
           }
-          
+
           if (attempts < maxRetries) {
             setTimeout(tryInit, 500);
           } else {
             console.log('Max attempts reached, web app not found');
           }
-          
+
           return false;
         };
-        
+
         tryInit();
       }
     };
 
     setIsAuthenticated(authService.isAuthenticated());
-    
+
     if (typeof window !== 'undefined') {
       if (document.readyState === 'complete') {
         initWebApp();
@@ -109,7 +107,7 @@ export default function Home() {
     };
 
     const interval = setInterval(checkAuth, 1000);
-    
+
     return () => {
       clearInterval(interval);
       if (typeof window !== 'undefined') {
@@ -121,7 +119,7 @@ export default function Home() {
   return (
     <div className={c.page}>
       <header className={c.header}>
-        <h1 className={c.aiName}>CyberEDU</h1>
+        <h1 className={c.aiName}>Cyber</h1>
         <div className={c.authButtonContainer}>
           <AuthButton />
         </div>

@@ -52,20 +52,17 @@ services:
 
   cyberedu-frontend:
     build:
-      context: ./frontend  # путь к папке с вашим React проектом
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: cyberedu-frontend
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_URL=http://localhost:8080  # или ваш бекенд URL
-      - CHOKIDAR_USEPOLLING=true  # для горячей перезагрузки в контейнере
+      - NEXT_PUBLIC_API_URL=http://cyberedu-backend:8080
     depends_on:
       - cyberedu-backend
     networks:
       - cyberedu-network
-    stdin_open: true  # для React dev server
-    tty: true  # для React dev server
     
 networks:
   cyberedu-network:

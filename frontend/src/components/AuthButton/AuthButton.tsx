@@ -8,7 +8,20 @@ import c from "./AuthButton.module.css";
 
 declare global {
   interface Window {
-    WebApp?: any;
+    WebApp?: {
+      initData?: string;
+      initDataUnsafe?: {
+        user?: {
+          id: number;
+          first_name?: string;
+          last_name?: string;
+          username?: string;
+        };
+        start_param?: string;
+      };
+      ready?: () => void;
+      expand?: () => void;
+    };
   }
 }
 
@@ -29,7 +42,9 @@ export const AuthButton = () => {
     if (typeof window !== 'undefined' && window.WebApp) {
       const app = window.WebApp;
       setWebApp(app);
-      app.ready();
+      if (app.ready) {
+        app.ready();
+      }
 
       if (authService.isAuthenticated() && app.initDataUnsafe?.user?.id) {
         const userId = app.initDataUnsafe.user.id;
@@ -61,7 +76,7 @@ export const AuthButton = () => {
 
   const handleAuth = async () => {
     if (!webApp) {
-      console.error('WebApp не инициализирован');
+      console.error('Max WebApp не инициализирован');
       return;
     }
 
